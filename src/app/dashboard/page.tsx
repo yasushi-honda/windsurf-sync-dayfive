@@ -1,20 +1,12 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { createClient } from '@supabase/supabase-js'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error('Missing Supabase environment variables')
-}
+import { supabase } from '@/lib/supabase'
 
 export default function DashboardPage() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [records, setRecords] = useState<any[]>([])
-  const supabase = useRef(createClient(supabaseUrl, supabaseKey))
   const isMounted = useRef(true)
 
   useEffect(() => {
@@ -25,7 +17,7 @@ export default function DashboardPage() {
         setLoading(true)
         console.log('Fetching records...')
         // データの取得
-        const { data, error: recordsError } = await supabase.current
+        const { data, error: recordsError } = await supabase
           .from('records')
           .select('*, users(name), staff(name), record_categories(name)')
           .order('created_at', { ascending: false })
