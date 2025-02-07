@@ -5,6 +5,7 @@ import { createClient, subscribeToAuthChanges, unsubscribeFromAuthChanges, check
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { AuthChangeEvent, Session } from '@supabase/supabase-js'
+import { Database } from '@/types/supabase'
 
 interface Record {
   id: string
@@ -29,7 +30,7 @@ export default function DashboardPage() {
       console.log('Fetching records...')
       // データの取得
       const { data, error: recordsError } = await supabase.current
-        .from<Record, any>('records')
+        .from<Database['public']['Tables']['records']['Row']>('records')
         .select('*, users(name), staff(name), record_categories(name)')
         .order('created_at', { ascending: false })
         .limit(10)
