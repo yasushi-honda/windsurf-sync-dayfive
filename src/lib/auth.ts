@@ -12,6 +12,10 @@ let supabase: ReturnType<typeof createSupabaseClient> | null = null
 let authSubscription: { unsubscribe: () => void } | null = null
 let authChangeCallbacks: Set<(event: AuthChangeEvent, session: Session | null) => void> = new Set()
 
+/**
+ * Supabaseクライアントを作成または取得します。
+ * @returns Supabaseクライアントインスタンス
+ */
 export function createClient() {
   if (!supabase) {
     console.log('Creating new Supabase client...')
@@ -39,6 +43,10 @@ export function createClient() {
   return supabase
 }
 
+/**
+ * 認証状態の変更を監視します。
+ * @param callback 認証状態が変更されたときに呼び出されるコールバック関数
+ */
 export function subscribeToAuthChanges(callback: (event: AuthChangeEvent, session: Session | null) => void) {
   const client = createClient()
 
@@ -74,6 +82,9 @@ export function subscribeToAuthChanges(callback: (event: AuthChangeEvent, sessio
   authSubscription = subscription
 }
 
+/**
+ * 認証状態の監視を解除します。
+ */
 export function unsubscribeFromAuthChanges() {
   if (authSubscription) {
     console.log('Unsubscribing from auth changes...')
@@ -82,6 +93,9 @@ export function unsubscribeFromAuthChanges() {
   }
 }
 
+/**
+ * 認証データをクリアします。
+ */
 export function clearAuthData() {
   authChangeCallbacks.clear()
   if (typeof window !== 'undefined') {
@@ -89,6 +103,10 @@ export function clearAuthData() {
   }
 }
 
+/**
+ * サインアウトを実行します。
+ * @throws {Error} サインアウト処理中にエラーが発生した場合
+ */
 export async function signOut() {
   const client = createClient()
   try {
@@ -105,11 +123,9 @@ export async function signOut() {
 
 /**
  * セッションの有効性を確認します。
- * 
- * @returns {Promise<{ session: Session | null, error: Error | null }>} 
- *          セッション情報とエラー情報を含むオブジェクトを返します。
+ * @returns {Promise<{ session: Session | null, error: Error | null }>} セッション情報とエラー情報を含むオブジェクト
  */
-export async function checkSession(): Promise<{ session: Session | null, error: Error | null }> {
+export const checkSession = async (): Promise<{ session: Session | null, error: Error | null }> => {
   const client = createClient()
   try {
     const { data: { session }, error } = await client.auth.getSession()
@@ -121,8 +137,11 @@ export async function checkSession(): Promise<{ session: Session | null, error: 
   }
 }
 
-// セッションの更新を試行
-export async function refreshSession() {
+/**
+ * セッションの更新を試行します。
+ * @returns {Promise<{ session: Session | null, error: Error | null }>} 更新されたセッション情報とエラー情報を含むオブジェクト
+ */
+export const refreshSession = async (): Promise<{ session: Session | null, error: Error | null }> => {
   const client = createClient()
   try {
     const { data: { session }, error } = await client.auth.refreshSession()

@@ -29,7 +29,7 @@ export default function DashboardPage() {
       // データの取得
       const { data, error: recordsError } = await supabase.current
         .from('records')
-        .select('*, users(name), staff(name), record_categories(name)')
+        .select<string, RecordWithRelations>('*, users(name), staff(name), record_categories(name)')
         .returns<RecordWithRelations>()
         .order('created_at', { ascending: false })
         .limit(10)
