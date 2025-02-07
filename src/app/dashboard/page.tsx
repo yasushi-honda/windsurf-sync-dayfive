@@ -24,13 +24,13 @@ export default function DashboardPage() {
       try {
         // データの取得
         const { data, error } = await supabase
-          .from('records')
+          .from<any>('records')
           .select('*, users(name), staff(name), record_categories(name)')
           .order('created_at', { ascending: false })
           .limit(10)
 
         if (error) throw error
-        setRecords(data || [])
+        setRecords((data as any[]) || [])
       } catch (error) {
         console.error('Error loading records:', error)
       } finally {
