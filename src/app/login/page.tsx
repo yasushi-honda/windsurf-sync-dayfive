@@ -4,10 +4,12 @@ import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { createClient } from '@/lib/auth'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [supabase, setSupabase] = useState<any>(null)
+  const router = useRouter()
 
   useEffect(() => {
     try {
@@ -18,6 +20,20 @@ export default function LoginPage() {
       // Auth状態の変更を監視
       const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
         console.log('Auth state changed:', event, session)
+        
+        // ログイン成功時にダッシュボードにリダイレクト
+        if (event === 'SIGNED_IN' && session) {
+          console.log('Redirecting to dashboard...')
+          router.push('/dashboard')
+        }
+      })
+
+      // 現在のセッションを確認
+      client.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          console.log('Existing session found, redirecting to dashboard...')
+          router.push('/dashboard')
+        }
       })
 
       return () => {
@@ -27,7 +43,7 @@ export default function LoginPage() {
       console.error('Error creating Supabase client:', err)
       setError('認証クライアントの初期化に失敗しました')
     }
-  }, [])
+  }, [router])
 
   if (error) {
     return (
@@ -65,6 +81,7 @@ export default function LoginPage() {
               }
             }}
             providers={[]}
+            redirectTo={`${window.location.origin}/dashboard`}
             localization={{
               variables: {
                 sign_in: {
