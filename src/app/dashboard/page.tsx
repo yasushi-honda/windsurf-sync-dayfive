@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function DashboardPage() {
-  const [records, setRecords] = useState([])
+  const [records, setRecords] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
 
