@@ -125,7 +125,7 @@ export async function signOut() {
  * セッションの有効性を確認します。
  * @returns {Promise<{ session: Session | null, error: Error | null }>} セッション情報とエラー情報を含むオブジェクト
  */
-export const checkSession = async (): Promise<{ session: Session | null, error: Error | null }> => {
+export async function checkSession(): Promise<{ session: Session | null, error: Error | null }> {
   const client = createClient()
   try {
     const { data: { session }, error } = await client.auth.getSession()

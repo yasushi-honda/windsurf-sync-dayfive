@@ -28,9 +28,8 @@ export default function DashboardPage() {
       console.log('Fetching records...')
       // データの取得
       const { data, error: recordsError } = await supabase.current
-        .from('records')
-        .select<string, RecordWithRelations>('*, users(name), staff(name), record_categories(name)')
-        .returns<RecordWithRelations>()
+        .from<Database['public']['Tables']['records']['Row']>('records')
+        .select('*, users(name), staff(name), record_categories(name)')
         .order('created_at', { ascending: false })
         .limit(10)
 
