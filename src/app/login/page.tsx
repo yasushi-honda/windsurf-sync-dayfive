@@ -2,7 +2,7 @@
 
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
-import { createClient } from '@/lib/auth'
+import { createClient, subscribeToAuthChanges, unsubscribeFromAuthChanges } from '@/lib/auth'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { SupabaseClient } from '@supabase/supabase-js'
@@ -22,8 +22,6 @@ export default function LoginPage() {
   }, [isRedirecting, router])
 
   useEffect(() => {
-    let subscription: { unsubscribe: () => void } | undefined
-
     async function initializeAuth() {
       try {
         const client = createClient()
@@ -39,13 +37,13 @@ export default function LoginPage() {
         }
 
         // Auth状態の変更を監視
-        subscription = client.auth.onAuthStateChange((event, session) => {
+        subscribeToAuthChanges((event, session) => {
           console.log('Auth state changed:', event, session ? 'with session' : 'no session')
           
           if (event === 'SIGNED_IN' && session) {
             handleRedirect()
           }
-        }).data.subscription
+        })
 
       } catch (err) {
         console.error('Error creating Supabase client:', err)
@@ -56,9 +54,7 @@ export default function LoginPage() {
     initializeAuth()
 
     return () => {
-      if (subscription) {
-        subscription.unsubscribe()
-      }
+      unsubscribeFromAuthChanges()
     }
   }, [handleRedirect])
 
