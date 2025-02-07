@@ -5,10 +5,11 @@ import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { createClient } from '@/lib/auth'
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { SupabaseClient } from '@supabase/supabase-js'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
-  const [supabase, setSupabase] = useState<any>(null)
+  const [supabase, setSupabase] = useState<SupabaseClient | null>(null)
   const [isRedirecting, setIsRedirecting] = useState(false)
   const router = useRouter()
 
@@ -21,7 +22,7 @@ export default function LoginPage() {
   }, [isRedirecting, router])
 
   useEffect(() => {
-    let subscription: { unsubscribe: () => void } | null = null
+    let subscription: { unsubscribe: () => void } | undefined
 
     async function initializeAuth() {
       try {
@@ -38,15 +39,14 @@ export default function LoginPage() {
         }
 
         // Auth状態の変更を監視
-        const { data: sub } = client.auth.onAuthStateChange((event, session) => {
+        subscription = client.auth.onAuthStateChange((event, session) => {
           console.log('Auth state changed:', event, session ? 'with session' : 'no session')
           
           if (event === 'SIGNED_IN' && session) {
             handleRedirect()
           }
-        })
+        }).data.subscription
 
-        subscription = sub
       } catch (err) {
         console.error('Error creating Supabase client:', err)
         setError('認証クライアントの初期化に失敗しました')
