@@ -130,6 +130,6 @@ export async function refreshSession() {
     return { session, error: null }
   } catch (error) {
     console.error('Error refreshing session:', error)
-    return { session: null, error }
+    return { session: null, error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }

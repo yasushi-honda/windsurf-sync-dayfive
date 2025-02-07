@@ -7,16 +7,14 @@ import Link from 'next/link'
 import { AuthChangeEvent, Session } from '@supabase/supabase-js'
 import { Database } from '@/types/supabase'
 
-interface Record {
-  id: string
-  created_at: string
+type RecordWithRelations = Database['public']['Tables']['records']['Row'] & {
   users: { name: string } | null
   staff: { name: string } | null
   record_categories: { name: string } | null
 }
 
 export default function DashboardPage() {
-  const [records, setRecords] = useState<Record[]>([])
+  const [records, setRecords] = useState<RecordWithRelations[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const isMounted = useRef(true)
@@ -30,8 +28,9 @@ export default function DashboardPage() {
       console.log('Fetching records...')
       // データの取得
       const { data, error: recordsError } = await supabase.current
-        .from<'records', Database['public']['Tables']['records']['Row']>('records')
+        .from('records')
         .select('*, users(name), staff(name), record_categories(name)')
+        .returns<RecordWithRelations>()
         .order('created_at', { ascending: false })
         .limit(10)
 
