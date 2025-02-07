@@ -3,7 +3,7 @@
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { createClient, subscribeToAuthChanges, unsubscribeFromAuthChanges } from '@/lib/auth'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SupabaseClient } from '@supabase/supabase-js'
 
@@ -13,50 +13,54 @@ export default function LoginPage() {
   const [isRedirecting, setIsRedirecting] = useState(false)
   const router = useRouter()
 
-  const handleRedirect = useCallback(() => {
-    if (!isRedirecting) {
-      setIsRedirecting(true)
-      console.log('Redirecting to dashboard...')
-      router.push('/dashboard')
-    }
-  }, [isRedirecting, router])
-
   useEffect(() => {
+    let isMounted = true
+
     async function initializeAuth() {
       try {
         const client = createClient()
         console.log('Supabase client created successfully')
-        setSupabase(client)
+        
+        if (isMounted) {
+          setSupabase(client)
+        }
 
         // 現在のセッションを確認
         const { data: { session } } = await client.auth.getSession()
-        if (session) {
+        if (session && isMounted && !isRedirecting) {
           console.log('Existing session found')
-          handleRedirect()
+          setIsRedirecting(true)
+          router.push('/dashboard')
           return
         }
 
         // Auth状態の変更を監視
-        subscribeToAuthChanges((event, session) => {
-          console.log('Auth state changed:', event, session ? 'with session' : 'no session')
-          
-          if (event === 'SIGNED_IN' && session) {
-            handleRedirect()
-          }
-        })
-
+        if (isMounted) {
+          subscribeToAuthChanges((event, session) => {
+            console.log('Auth state changed:', event, session ? 'with session' : 'no session')
+            
+            if (event === 'SIGNED_IN' && session && !isRedirecting) {
+              console.log('Redirecting to dashboard...')
+              setIsRedirecting(true)
+              router.push('/dashboard')
+            }
+          })
+        }
       } catch (err) {
         console.error('Error creating Supabase client:', err)
-        setError('認証クライアントの初期化に失敗しました')
+        if (isMounted) {
+          setError('認証クライアントの初期化に失敗しました')
+        }
       }
     }
 
     initializeAuth()
 
     return () => {
+      isMounted = false
       unsubscribeFromAuthChanges()
     }
-  }, [handleRedirect])
+  }, [router, isRedirecting])
 
   if (error) {
     return (
