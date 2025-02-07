@@ -117,7 +117,7 @@ export async function checkSession(): Promise<{ session: Session | null, error: 
     return { session, error: null }
   } catch (error) {
     console.error('Error checking session:', error)
-    return { session: null, error }
+    return { session: null, error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }
 
