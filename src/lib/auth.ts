@@ -123,32 +123,32 @@ export async function signOut() {
 
 /**
  * セッションの有効性を確認します。
- * @returns {Promise<{ session: Session | null, error: Error | null }>} セッション情報とエラー情報を含むオブジェクト
+ * @returns {Promise<{ data: { session: Session | null }, error: Error | null }>} セッション情報とエラー情報を含むオブジェクト
  */
-export async function checkSession(): Promise<{ session: Session | null, error: Error | null }> {
+export async function checkSession(): Promise<{ data: { session: Session | null }, error: Error | null }> {
   const client = createClient()
   try {
-    const { data: { session }, error } = await client.auth.getSession()
+    const { data, error } = await client.auth.getSession()
     if (error) throw error
-    return { session, error: null }
+    return { data, error: null }
   } catch (error) {
     console.error('Error checking session:', error)
-    return { session: null, error: error instanceof Error ? error : new Error('Unknown error') }
+    return { data: { session: null }, error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }
 
 /**
  * セッションの更新を試行します。
- * @returns {Promise<{ session: Session | null, error: Error | null }>} 更新されたセッション情報とエラー情報を含むオブジェクト
+ * @returns {Promise<{ data: { session: Session | null }, error: Error | null }>} 更新されたセッション情報とエラー情報を含むオブジェクト
  */
-export const refreshSession = async (): Promise<{ session: Session | null, error: Error | null }> => {
+export async function refreshSession(): Promise<{ data: { session: Session | null }, error: Error | null }> {
   const client = createClient()
   try {
-    const { data: { session }, error } = await client.auth.refreshSession()
+    const { data, error } = await client.auth.refreshSession()
     if (error) throw error
-    return { session, error: null }
+    return { data, error: null }
   } catch (error) {
     console.error('Error refreshing session:', error)
-    return { session: null, error: error instanceof Error ? error : new Error('Unknown error') }
+    return { data: { session: null }, error: error instanceof Error ? error : new Error('Unknown error') }
   }
 }
