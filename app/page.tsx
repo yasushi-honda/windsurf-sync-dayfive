@@ -1,173 +1,128 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { supabase } from '../utils/supabase/client'
-
-interface Memo {
-  id: string
-  title: string
-  content: string
-  created_at: string
-}
+import { useEffect, useState } from "react";
+import { supabase } from "@/utils/supabase/client";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Home() {
-  const [memos, setMemos] = useState<Memo[]>([])
-  const [title, setTitle] = useState('')
-  const [content, setContent] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [memos, setMemos] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    // 初期化時にSupabase接続テスト
-    const testConnection = async () => {
+    const fetchMemos = async () => {
       try {
-        console.log('Supabase接続テスト中...')
         const { data, error } = await supabase
-          .from('memos')
-          .select('count')
-          .single()
+          .from("memos")
+          .select("*")
+          .order("created_at", { ascending: false });
 
-        if (error) {
-          console.error('接続テストエラー:', error)
-          throw error
-        }
-
-        console.log('接続テスト成功:', data)
-        fetchMemos()
-      } catch (err: any) {
-        console.error('接続テストエラー詳細:', err)
-        setError(`データベース接続エラー: ${err.message || '不明なエラー'}`)
+        if (error) throw error;
+        if (data) setMemos(data);
+      } catch (error) {
+        console.error("Error fetching memos:", error);
       }
-    }
+    };
 
-    testConnection()
-  }, [])
-
-  const fetchMemos = async () => {
-    try {
-      console.log('メモを取得中...')
-      const { data, error } = await supabase
-        .from('memos')
-        .select('*')
-        .order('created_at', { ascending: false })
-      
-      if (error) {
-        console.error('メモ取得エラーの詳細:', error)
-        throw error
-      }
-      
-      console.log('取得したメモ:', data)
-      setMemos(data || [])
-      setError(null)
-    } catch (err: any) {
-      console.error('メモの取得エラー:', err)
-      setError(`メモの取得に失敗しました: ${err.message || '不明なエラー'}`)
-    }
-  }
+    fetchMemos();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsLoading(true)
-    
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      const newMemo = {
-        title,
-        content,
-        created_at: new Date().toISOString()
-      }
-      console.log('保存するメモ:', newMemo)
-
-      // メモの保存を試みる前にテーブルの存在確認
-      const { error: tableCheckError } = await supabase
-        .from('memos')
-        .select('count')
-        .single()
-
-      if (tableCheckError) {
-        console.error('テーブル確認エラー:', tableCheckError)
-        throw new Error('メモテーブルにアクセスできません')
-      }
-
       const { data, error } = await supabase
-        .from('memos')
-        .insert([newMemo])
-        .select()
-      
-      if (error) {
-        console.error('メモ保存エラーの詳細:', error)
-        throw error
-      }
+        .from("memos")
+        .insert([{ title, content, created_at: new Date().toISOString() }])
+        .select();
 
-      console.log('保存されたメモ:', data)
-      setTitle('')
-      setContent('')
-      await fetchMemos()
-    } catch (err: any) {
-      console.error('メモの保存エラー:', err)
-      setError(`メモの保存に失敗しました: ${err.message || '不明なエラー'}`)
+      if (error) throw error;
+
+      if (data) {
+        setMemos([...data, ...memos]);
+        setTitle("");
+        setContent("");
+      }
+    } catch (error) {
+      console.error("Error inserting memo:", error);
     } finally {
-      setIsLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
-    <main className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">メモアプリ</h1>
-      
-      {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4" role="alert">
-          <p>{error}</p>
+    <main className="min-h-screen p-4 md:p-8 bg-background">
+      <div className="max-w-4xl mx-auto space-y-8">
+        <div className="flex justify-between items-center">
+          <h1 className="text-3xl font-bold tracking-tight">メモアプリ</h1>
+          <ThemeToggle />
         </div>
-      )}
 
-      <form onSubmit={handleSubmit} className="mb-8">
-        <div className="mb-4">
-          <label className="block mb-2">タイトル</label>
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full p-2 border rounded"
-            required
-          />
-        </div>
-        
-        <div className="mb-4">
-          <label className="block mb-2">内容</label>
-          <textarea
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            className="w-full p-2 border rounded"
-            rows={4}
-            required
-          />
-        </div>
-        
-        <button
-          type="submit"
-          disabled={isLoading}
-          className={`px-4 py-2 rounded ${
-            isLoading 
-              ? 'bg-gray-400 cursor-not-allowed' 
-              : 'bg-blue-500 hover:bg-blue-600'
-          } text-white`}
-        >
-          {isLoading ? '保存中...' : '保存'}
-        </button>
-      </form>
-
-      <div className="grid gap-4">
-        {memos.map((memo) => (
-          <div key={memo.id} className="border p-4 rounded">
-            <h2 className="text-xl font-bold">{memo.title}</h2>
-            <p className="mt-2 whitespace-pre-wrap">{memo.content}</p>
-            <p className="text-sm text-gray-500 mt-2">
-              {new Date(memo.created_at).toLocaleString('ja-JP')}
-            </p>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <label
+              htmlFor="title"
+              className="block text-sm font-medium text-foreground"
+            >
+              タイトル
+            </label>
+            <input
+              id="title"
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border bg-background text-foreground shadow-sm focus:ring-2 focus:ring-primary"
+              required
+            />
           </div>
-        ))}
+
+          <div className="space-y-2">
+            <label
+              htmlFor="content"
+              className="block text-sm font-medium text-foreground"
+            >
+              内容
+            </label>
+            <textarea
+              id="content"
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg border bg-background text-foreground shadow-sm focus:ring-2 focus:ring-primary min-h-[150px]"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-lg font-medium shadow hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {loading ? "保存中..." : "保存"}
+          </button>
+        </form>
+
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">メモ一覧</h2>
+          <div className="grid gap-4 md:grid-cols-2">
+            {memos.map((memo) => (
+              <div
+                key={memo.id}
+                className="p-4 rounded-lg border bg-card text-card-foreground shadow-sm"
+              >
+                <h3 className="text-lg font-medium mb-2">{memo.title}</h3>
+                <p className="text-muted-foreground whitespace-pre-wrap">
+                  {memo.content}
+                </p>
+                <time className="text-sm text-muted-foreground mt-2 block">
+                  {new Date(memo.created_at).toLocaleString("ja-JP")}
+                </time>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </main>
-  )
+  );
 }
