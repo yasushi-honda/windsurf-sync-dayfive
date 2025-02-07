@@ -3,47 +3,64 @@
 import { Auth } from '@supabase/auth-ui-react'
 import { ThemeSupa } from '@supabase/auth-ui-shared'
 import { createClient } from '@/lib/auth'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [supabase, setSupabase] = useState<any>(null)
+  const [isRedirecting, setIsRedirecting] = useState(false)
   const router = useRouter()
 
+  const handleRedirect = useCallback(() => {
+    if (!isRedirecting) {
+      setIsRedirecting(true)
+      console.log('Redirecting to dashboard...')
+      router.push('/dashboard')
+    }
+  }, [isRedirecting, router])
+
   useEffect(() => {
-    try {
-      const client = createClient()
-      console.log('Supabase client created successfully')
-      setSupabase(client)
+    let subscription: { unsubscribe: () => void } | null = null
 
-      // Auth状態の変更を監視
-      const { data: { subscription } } = client.auth.onAuthStateChange((event, session) => {
-        console.log('Auth state changed:', event, session)
-        
-        // ログイン成功時にダッシュボードにリダイレクト
-        if (event === 'SIGNED_IN' && session) {
-          console.log('Redirecting to dashboard...')
-          router.push('/dashboard')
-        }
-      })
+    async function initializeAuth() {
+      try {
+        const client = createClient()
+        console.log('Supabase client created successfully')
+        setSupabase(client)
 
-      // 現在のセッションを確認
-      client.auth.getSession().then(({ data: { session } }) => {
+        // 現在のセッションを確認
+        const { data: { session } } = await client.auth.getSession()
         if (session) {
-          console.log('Existing session found, redirecting to dashboard...')
-          router.push('/dashboard')
+          console.log('Existing session found')
+          handleRedirect()
+          return
         }
-      })
 
-      return () => {
+        // Auth状態の変更を監視
+        const { data: sub } = client.auth.onAuthStateChange((event, session) => {
+          console.log('Auth state changed:', event, session ? 'with session' : 'no session')
+          
+          if (event === 'SIGNED_IN' && session) {
+            handleRedirect()
+          }
+        })
+
+        subscription = sub
+      } catch (err) {
+        console.error('Error creating Supabase client:', err)
+        setError('認証クライアントの初期化に失敗しました')
+      }
+    }
+
+    initializeAuth()
+
+    return () => {
+      if (subscription) {
         subscription.unsubscribe()
       }
-    } catch (err) {
-      console.error('Error creating Supabase client:', err)
-      setError('認証クライアントの初期化に失敗しました')
     }
-  }, [router])
+  }, [handleRedirect])
 
   if (error) {
     return (
@@ -53,10 +70,10 @@ export default function LoginPage() {
     )
   }
 
-  if (!supabase) {
+  if (!supabase || isRedirecting) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div>読み込み中...</div>
+        <div>{isRedirecting ? 'ダッシュボードに移動中...' : '読み込み中...'}</div>
       </div>
     )
   }
@@ -81,7 +98,6 @@ export default function LoginPage() {
               }
             }}
             providers={[]}
-            redirectTo={`${window.location.origin}/dashboard`}
             localization={{
               variables: {
                 sign_in: {
