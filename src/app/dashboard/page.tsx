@@ -1,14 +1,51 @@
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
-import { cookies } from 'next/headers'
+'use client'
+
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/auth'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
-export default async function DashboardPage() {
-  const supabase = createServerComponentClient({ cookies })
-  const { data: records } = await supabase
-    .from('records')
-    .select('*, users(name), staff(name), record_categories(name)')
-    .order('created_at', { ascending: false })
-    .limit(10)
+export default function DashboardPage() {
+  const [records, setRecords] = useState([])
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
+  useEffect(() => {
+    const checkAuthAndLoadData = async () => {
+      const supabase = createClient()
+      
+      // セッションの確認
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        router.push('/login')
+        return
+      }
+
+      try {
+        // データの取得
+        const { data, error } = await supabase
+          .from('records')
+          .select('*, users(name), staff(name), record_categories(name)')
+          .order('created_at', { ascending: false })
+          .limit(10)
+
+        if (error) throw error
+        setRecords(data || [])
+      } catch (error) {
+        console.error('Error loading records:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkAuthAndLoadData()
+  }, [router])
+
+  if (loading) {
+    return <div className="min-h-screen bg-gray-100 flex items-center justify-center">
+      <div className="text-xl">読み込み中...</div>
+    </div>
+  }
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -26,7 +63,7 @@ export default async function DashboardPage() {
           
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
             <ul className="divide-y divide-gray-200">
-              {records?.map((record) => (
+              {records.map((record) => (
                 <li key={record.id}>
                   <Link href={`/records/${record.id}`}>
                     <div className="px-4 py-4 flex items-center sm:px-6 hover:bg-gray-50">
@@ -49,7 +86,7 @@ export default async function DashboardPage() {
                               利用者: {record.users?.name}
                             </p>
                             <p className="mt-2 flex items-center text-sm text-gray-500 sm:mt-0 sm:ml-6">
-                              記録者: {record.staff?.name}
+                              スタッフ: {record.staff?.name}
                             </p>
                           </div>
                           <p className="text-sm text-gray-500">
