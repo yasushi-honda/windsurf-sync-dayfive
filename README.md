@@ -124,12 +124,32 @@ export const config = {
 
 ### 3. Vercelへのデプロイ
 
+#### 3.1 Vercel CLIのインストールとセットアップ
+```bash
+# Vercel CLIのインストール
+npm i -g vercel
+
+# ログイン
+vercel login
+
+# プロジェクトのリンク
+vercel link
+
+# 環境変数の設定
+vercel env add NEXT_PUBLIC_SUPABASE_URL
+vercel env add NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+# 本番環境への環境変数の反映
+vercel env pull .env.production
+```
+
+#### 3.2 デプロイの実行
 1. GitHubにプッシュ
 2. [Vercel](https://vercel.com)でプロジェクトをインポート
-3. 環境変数を設定
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-4. デプロイを実行
+3. デプロイの状態確認
+```bash
+vercel logs windsurf-sync-dayfive.vercel.app
+```
 
 ## 認証フローの確認
 
