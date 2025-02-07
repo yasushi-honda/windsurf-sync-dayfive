@@ -4,7 +4,7 @@ import { createBrowserClient } from '@supabase/ssr'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export default function Login() {
+export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -38,10 +38,10 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+    <main className="min-h-screen flex items-center justify-center p-4 bg-background">
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold">ログイン</h1>
+          <h1 className="text-3xl font-bold text-foreground">ログイン</h1>
           <p className="mt-2 text-sm text-muted-foreground">
             メモアプリにログインしてください
           </p>
@@ -98,6 +98,6 @@ export default function Login() {
           </button>
         </form>
       </div>
-    </div>
+    </main>
   )
 }
