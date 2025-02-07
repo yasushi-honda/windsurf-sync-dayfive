@@ -1,6 +1,6 @@
 import { createServerComponentClient } from '@supabase/auth-helpers-nextjs'
 import { cookies } from 'next/headers'
-import RecordForm from '@/components/RecordForm'
+import RecordForm from '@/components/records/RecordForm'
 
 export default async function NewRecordPage() {
   const supabase = createServerComponentClient({ cookies })
@@ -16,18 +16,16 @@ export default async function NewRecordPage() {
   ])
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">新規記録作成</h1>
-          <div className="bg-white shadow sm:rounded-lg">
-            <div className="px-4 py-5 sm:p-6">
-              <RecordForm
-                users={users || []}
-                categories={categories || []}
-                tags={tags || []}
-              />
-            </div>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <h1 className="text-2xl font-semibold text-gray-900">新規記録作成</h1>
+        <div className="mt-8">
+          <div className="card bg-white p-6 shadow">
+            <RecordForm
+              users={users || []}
+              categories={categories || []}
+              tags={tags || []}
+            />
           </div>
         </div>
       </div>
